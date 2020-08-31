@@ -1,2 +1,2 @@
 # raft-learning
-raft on jva
+raft on java
