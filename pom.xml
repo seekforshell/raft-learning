@@ -47,9 +47,9 @@
                             <finalName>${assembly.name}</finalName>
                             <appendAssemblyId>false</appendAssemblyId>
 <!--                            like profile-->
-                            <descriptorRefs>
-                                <descriptorRef>bin</descriptorRef>
-                            </descriptorRefs>
+                            <descriptors>
+                                <descriptor>./assembly.xml</descriptor>
+                            </descriptors>
                             <outputDirectory>${project.basedir}/dist</outputDirectory>
                         </configuration>
                     </execution>

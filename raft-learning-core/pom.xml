@@ -5,20 +5,33 @@
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <netty-all.version>4.1.51.Final</netty-all.version>
+        <slf4j-api.version>1.7.21</slf4j-api.version>
     </properties>
 
-    <parent>
-        <artifactId>raft-learning</artifactId>
-        <groupId>raft</groupId>
-        <version>1.0</version>
-    </parent>
-
+    <groupId>raft</groupId>
+    <version>1.0</version>
     <artifactId>raft-leaning-core</artifactId>
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -34,6 +47,7 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
             <version>${netty-all.version}</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>
