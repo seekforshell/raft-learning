@@ -4,14 +4,17 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>${project.groupId}</groupId>
+    <groupId>raft</groupId>
     <artifactId>raft-learning</artifactId>
     <version>1.0</version>
 
     <packaging>pom</packaging>
+
     <properties>
         <assembly.name>raft-lab</assembly.name>
-        <project.groupId>raft</project.groupId>
+        <raft.version>1.0</raft.version>
+        <slf4j-api.version>1.7.21</slf4j-api.version>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
     </properties>
 
     <modules>
@@ -22,6 +25,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <encoding>utf-8</encoding>
                     <source>1.8</source>
@@ -42,9 +46,10 @@
                         <configuration>
                             <finalName>${assembly.name}</finalName>
                             <appendAssemblyId>false</appendAssemblyId>
-                            <descriptors>
-                                <descriptor>assembly.xml</descriptor>
-                            </descriptors>
+<!--                            like profile-->
+                            <descriptorRefs>
+                                <descriptorRef>bin</descriptorRef>
+                            </descriptorRefs>
                             <outputDirectory>${project.basedir}/dist</outputDirectory>
                         </configuration>
                     </execution>
@@ -64,6 +69,7 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
             <version>4.1.51.Final</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>
