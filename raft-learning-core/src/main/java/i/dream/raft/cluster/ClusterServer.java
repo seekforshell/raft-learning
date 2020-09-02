@@ -8,9 +8,11 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -35,16 +37,23 @@ public class ClusterServer {
     private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     public void init () {
 
-        SocketAddress socketAddress = new InetSocketAddress(FileUtil.getClusterIp(), FileUtil.getClusterServerPort());
+        SocketAddress socketAddress = new InetSocketAddress(FileUtil.getClusterServerPort());
         executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
         try {
             serverSocketChannel = ServerSocketChannel.open();
-            serverSocketChannel.bind(socketAddress);
+            serverSocketChannel.configureBlocking(false);
+            serverSocketChannel.socket().bind(socketAddress);
             selector = Selector.open();
-            serverSocketChannel.register(selector, SelectionKey.OP_READ);
+            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
         } catch (IOException e) {
             logger.error("open selector error:", e);
+            throw new ClusterException(e.getMessage());
+        } catch (IllegalArgumentException ie) {
+            logger.error("illegal argument error:", ie);
+            throw new ClusterException(ie.getMessage());
+        } catch (Exception e) {
+            logger.error("unknown error:", e);
             throw new ClusterException(e.getMessage());
         }
 
@@ -66,10 +75,18 @@ public class ClusterServer {
                     Iterator<SelectionKey> it = keys.iterator();
                     SelectionKey key = null;
                     for (; it.hasNext(); key = it.next()) {
-
+                        if (key.isAcceptable()) {
+                            SelectableChannel channel = key.channel();
+                            if (channel instanceof ServerSocketChannel) {
+                                SocketChannel acceptChannel = ((ServerSocketChannel) channel).accept();
+                                acceptChannel.register(selector, SelectionKey.OP_READ);
+                            }
+                        } else if (key.isReadable()) {
+                            NioEventGroupHandler.eventQueue.put(key);
+                        }
                     }
                 }
-            } catch (IOException e) {
+            } catch (IOException | InterruptedException e) {
                 logger.error("select error:", e);
             }
         }

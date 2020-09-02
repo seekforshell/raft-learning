@@ -52,7 +52,7 @@ public class FileUtil {
 
     public static Integer getClusterServerPort() {
         if (null != properties) {
-            final String[] bind = String.valueOf(properties.get("bind")).split("");
+            final String[] bind = String.valueOf(properties.get("bind")).split(":");
             return Integer.valueOf(bind[1]);
         }
 
