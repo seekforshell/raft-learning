@@ -5,8 +5,7 @@ package i.dream.raft.cluster.process;
  *
  * @author: yujingzhi
  * Version: 1.0
- * Create Date Time: 2020-09-02 17:35.
  */
-public interface Process {
+public interface Process extends Runnable {
     void process();
 }

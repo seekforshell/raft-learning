@@ -1,8 +1,10 @@
-package i.dream.raft.cluster;
+package i.dream;
 
-import i.dream.IServer;
 import i.dream.ex.ClusterException;
 import i.dream.net.SelectorProxy;
+import i.dream.raft.struct.cluster.ClusterInfo;
+import i.dream.raft.struct.cluster.ClusterState;
+import i.dream.raft.struct.node.NodeInfo;
 import i.dream.util.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,19 +14,31 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Description:
- *
  * @author: yujingzhi
  * Version: 1.0
  */
-public class ClusterServer implements IServer {
+public class Server implements IServer {
+
+    private ClusterInfo clusterInfo;
     private ServerSocketChannel serverSocketChannel = null;
     private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+    public static Object serverStartLock = new Object();
+
+    public Server() {
+        // init struct
+        clusterInfo = new ClusterInfo();
+        clusterInfo.setNodes(new ConcurrentHashMap<String, NodeInfo>(10));
+        clusterInfo.setRole(NodeInfo.FOLLOWER);
+        final ClusterState state = new ClusterState();
+        clusterInfo.setState(state);
+    }
+
     public void start () {
 
-        SocketAddress socketAddress = new InetSocketAddress(FileUtil.getClusterServerPort());
+        SocketAddress socketAddress = new InetSocketAddress(FileUtil.getServerPort());
         try {
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);
@@ -43,7 +57,8 @@ public class ClusterServer implements IServer {
             throw new ClusterException(e.getMessage());
         }
 
-        logger.info("cluster server is started.");
-    }
+        serverStartLock.notifyAll();
 
+        logger.info("raft server is started.");
+    }
 }

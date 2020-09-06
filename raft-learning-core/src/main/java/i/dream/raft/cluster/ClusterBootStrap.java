@@ -1,5 +1,7 @@
 package i.dream.raft.cluster;
 
+import i.dream.raft.cluster.process.MainEventProcess;
+
 /**
  * Description:
  *
@@ -14,7 +16,7 @@ public class ClusterBootStrap {
 
         ClusterServer bootStrap = new ClusterServer();
         try {
-            bootStrap.init();
+            bootStrap.start();
         } catch (Exception e) {
             success = false;
         }

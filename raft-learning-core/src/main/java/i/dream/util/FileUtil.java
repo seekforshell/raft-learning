@@ -18,7 +18,11 @@ public class FileUtil {
 //    private static final String filePath = "/opt/conf/raft.properties";
     private static final String filePath = "/Users/renfei/workspace/git/raft-learning/conf/raft.properties";
     private static Properties properties = new Properties();
-    private static int CLUSTER_SERVER_PORT = 10000 + 1001;
+
+    // cluster_port = [server_port] + 10000
+    private static int SERVER_PORT = 1001;
+    private static int CLUSTER_SERVER_PORT = 10000 + SERVER_PORT;
+
     public static Properties readConfig() throws Exception {
         InputStream fileInput = null;
         try {
@@ -52,10 +56,19 @@ public class FileUtil {
 
     public static Integer getClusterServerPort() {
         if (null != properties) {
-            final String[] bind = String.valueOf(properties.get("bind")).split(":");
-            return Integer.valueOf(bind[1]);
+            String serverPort = (String)properties.get("port");
+            return Integer.parseInt(serverPort) + 10000;
         }
 
         return CLUSTER_SERVER_PORT;
+    }
+
+    public static Integer getServerPort() {
+        if (null != properties) {
+            String serverPort = (String)properties.get("port");
+            return Integer.parseInt(serverPort);
+        }
+
+        return SERVER_PORT;
     }
 }

@@ -14,6 +14,8 @@ public class NodeInfo {
     public static final short FOLLOWER = 1;
     public static final short LEADER = 2;
 
+    private String nodeId;
+
     private InetSocketAddress address;
 
     private volatile short state;

@@ -1,4 +1,7 @@
+import i.dream.Server;
+import i.dream.net.SelectorProxy;
 import i.dream.raft.cluster.ClusterBootStrap;
+import i.dream.raft.cluster.process.MainEventProcess;
 import i.dream.util.FileUtil;
 
 import java.util.Properties;
@@ -8,7 +11,6 @@ import java.util.Properties;
  *
  * @author: yujingzhi
  * Version: 1.0
- * Create Date Time: 2020-08-24 19:56.
  */
 public class Main {
 
@@ -18,10 +20,8 @@ public class Main {
 
         return helpMessage.toString();
     }
+
     public static void main(String[] args) throws Exception {
-//        if (null == args || args.length < 1) {
-//            throw new IllegalArgumentException("");
-//        }
 
         Properties config = FileUtil.readConfig();
         String addressList = config.getProperty("bind");
@@ -34,9 +34,19 @@ public class Main {
 
         }
 
-        String ip = addressList.split(":")[0];
-        int port = Integer.parseInt(addressList.split(":")[1]);
+        // Main event loop
+        MainEventProcess mainProcess = new MainEventProcess();
+        mainProcess.run();
 
+        // selector init
+        SelectorProxy selectorProxy = new SelectorProxy();
+        selectorProxy.init();
+
+        // raft server daemon
+        Server server = new Server();
+        server.start();
+
+        // cluster daemon
         ClusterBootStrap clusterBootStrap = new ClusterBootStrap();
         clusterBootStrap.start();
 
