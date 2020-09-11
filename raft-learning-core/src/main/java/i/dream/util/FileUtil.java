@@ -16,7 +16,7 @@ import java.util.Properties;
  */
 public class FileUtil {
 //    private static final String filePath = "/opt/conf/raft.properties";
-    private static final String filePath = "/Users/renfei/workspace/git/raft-learning/conf/raft.properties";
+    private static final String filePath = "M:\\github\\raft-learning\\conf\\raft.properties";
     private static Properties properties = new Properties();
 
     // cluster_port = [server_port] + 10000

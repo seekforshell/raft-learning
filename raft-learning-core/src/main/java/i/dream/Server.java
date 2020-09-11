@@ -6,6 +6,7 @@ import i.dream.raft.struct.cluster.ClusterInfo;
 import i.dream.raft.struct.cluster.ClusterState;
 import i.dream.raft.struct.node.NodeInfo;
 import i.dream.util.FileUtil;
+import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ public class Server implements IServer {
     private ClusterInfo clusterInfo;
     private ServerSocketChannel serverSocketChannel = null;
     private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-    public static Object serverStartLock = new Object();
+    public static final Object serverStartLock = new Object();
 
     public Server() {
         // init struct
@@ -57,7 +58,9 @@ public class Server implements IServer {
             throw new ClusterException(e.getMessage());
         }
 
-        serverStartLock.notifyAll();
+        synchronized (Server.serverStartLock) {
+            serverStartLock.notifyAll();
+        }
 
         logger.info("raft server is started.");
     }

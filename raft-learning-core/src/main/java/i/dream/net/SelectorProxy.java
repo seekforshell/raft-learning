@@ -51,11 +51,13 @@ public class SelectorProxy {
 
     class SelectorProxyTask implements Runnable {
         public void run() {
-            try {
-                Server.serverStartLock.wait();
-            } catch (InterruptedException e) {
-                log.error("selector error:system error");
-                System.exit(1);
+            synchronized (Server.serverStartLock) {
+                try {
+                    Server.serverStartLock.wait();
+                } catch (InterruptedException e) {
+                    log.error("selector error:system error");
+                    System.exit(1);
+                }
             }
 
             try {
@@ -63,14 +65,13 @@ public class SelectorProxy {
                     int cnt = selector.select(100L);
                     if (cnt > 0) {
                         Set<SelectionKey> keys = selector.selectedKeys();
-                        Iterator<SelectionKey> it = keys.iterator();
-                        SelectionKey key = null;
-                        ServerSocketChannel channel = (ServerSocketChannel)key.channel();
-                        for (; it.hasNext(); key = it.next()) {
-                            if (key.isAcceptable()) {
-                                String clientInfo = "";
+                        for (SelectionKey key : keys) {
 
+                            if (key.isAcceptable()) {
+                                ServerSocketChannel channel = (ServerSocketChannel)key.channel();
+                                String clientInfo = "";
                                 SocketChannel acceptChannel = channel.accept();
+                                acceptChannel.configureBlocking(false);
                                 clientInfo = acceptChannel.getRemoteAddress().toString();
                                 if (isClusterChannel(channel)) {
                                 }
@@ -85,6 +86,8 @@ public class SelectorProxy {
                             }
 
                         }
+
+                        keys.clear();
                     }
 
                     Thread.sleep(100);

@@ -20,6 +20,9 @@ public class EventProcessExecutor {
     }
 
     public void doRun(Process process) {
+        if (null == process) {
+            return;
+        }
 
         executor.submit(process);
     }
