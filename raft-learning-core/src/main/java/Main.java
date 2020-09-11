@@ -1,7 +1,6 @@
 import i.dream.Server;
 import i.dream.net.SelectorProxy;
 import i.dream.raft.cluster.ClusterBootStrap;
-import i.dream.raft.cluster.process.MainEventProcess;
 import i.dream.util.FileUtil;
 
 import java.util.Properties;
@@ -34,10 +33,6 @@ public class Main {
 
         }
 
-        // Main event loop
-        MainEventProcess mainProcess = new MainEventProcess();
-        mainProcess.run();
-
         // selector init
         SelectorProxy selectorProxy = new SelectorProxy();
         selectorProxy.init();
@@ -47,8 +42,8 @@ public class Main {
         server.start();
 
         // cluster daemon
-        ClusterBootStrap clusterBootStrap = new ClusterBootStrap();
-        clusterBootStrap.start();
+//        ClusterBootStrap clusterBootStrap = new ClusterBootStrap();
+//        clusterBootStrap.start();
 
     }
 }

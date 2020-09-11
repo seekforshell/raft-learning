@@ -30,7 +30,7 @@ public class FileUtil {
             fileInput = new FileInputStream(new File(confPath));
             properties.load(fileInput);
         } catch (FileNotFoundException nx) {
-            throw new Exception("file not exist");
+            throw new Exception("file not exist, please specify the position of config file!");
         } catch (IOException e) {
             e.printStackTrace();
         } finally {

@@ -1,7 +1,5 @@
 package i.dream.raft.cluster;
 
-import i.dream.raft.cluster.process.MainEventProcess;
-
 /**
  * Description:
  *
