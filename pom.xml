@@ -19,6 +19,7 @@
 
     <modules>
         <module>raft-learning-core</module>
+        <module>raft-client</module>
     </modules>
     <build>
         <plugins>

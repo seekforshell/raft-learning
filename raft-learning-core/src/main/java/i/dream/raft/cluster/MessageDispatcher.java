@@ -1,7 +1,11 @@
 package i.dream.raft.cluster;
 
-import i.dream.raft.cluster.message.ClusterMessageType;
+import i.dream.ex.PackageParseException;
+import i.dream.raft.cluster.message.MessageType;
 import i.dream.raft.cluster.message.HeartBeatMessage;
+import i.dream.raft.cluster.message.PayLoad;
+import i.dream.raft.cluster.message.PayloadMeta;
+import i.dream.raft.cluster.process.AbstractProcess;
 import i.dream.raft.cluster.process.EventProcessExecutor;
 import i.dream.raft.cluster.process.GossipProcessImpl;
 import i.dream.raft.cluster.process.Process;
@@ -33,11 +37,17 @@ public class MessageDispatcher implements Runnable{
 
     private ByteBuffer payLoadBuffer = metaBuffer;
 
-    public static LinkedBlockingQueue<SelectionKey> eventQueue = new LinkedBlockingQueue(1024);
+    public static LinkedBlockingQueue<SelectionKey> eventQueue = new LinkedBlockingQueue(4096);
 
     public static EventProcessExecutor eventProcessExecutor = new EventProcessExecutor();
 
-    public HeartBeatMessage parsePackage(byte[] rawPackage) {
+    public PayloadMeta parsePackage(ByteBuffer rawPackage) {
+        if (PayLoad.MAGIC != rawPackage.getInt()) {
+            log.error("invalid package format, magic:" + rawPackage.getInt());
+            throw new PackageParseException("magic is invalid");
+        }
+
+        short type = rawPackage.getShort();
 
         return null;
     }
@@ -48,17 +58,19 @@ public class MessageDispatcher implements Runnable{
             SelectionKey event = eventQueue.poll();
             Process process = null;
             if (null != event) {
+                SocketChannel channel = (SocketChannel) event.channel();
                 if (event.isReadable()) {
-                    SocketChannel channel = (SocketChannel) event.channel();
-
                     // to avoid sticky package, so read the length of package first
                     try {
                         int c = channel.read(payLoadBuffer);
                         if (c < 0) {
                             log.error("read payload length, unable to read additional data");
+                            channel.socket().close();
+                            channel.close();
+                            continue;
                         }
                     } catch (IOException e) {
-                        log.error("read error,", e);
+                        log.error("io error,", e);
                     }
 
                     if (0 == payLoadBuffer.remaining()) {
@@ -79,23 +91,54 @@ public class MessageDispatcher implements Runnable{
                             payLoadBuffer.flip();
 
                             Charset charset = StandardCharsets.UTF_8;
-                            CharBuffer charBuffer = charset.decode(payLoadBuffer);
-                            log.info("receive message is :"+ charBuffer.toString());
-                            // parse package
-                            HeartBeatMessage message = parsePackage(payLoadBuffer.array());
-                            if (null != message) {
-                                final int msgType = message.getMsgType();
-                                if (ClusterMessageType.CLUSTERMSG_TYPE_PING.getCode() == msgType) {
-                                    process = new GossipProcessImpl();
-                                }
-                            }
+                            CharBuffer decodedBuff = charset.decode(payLoadBuffer);
+                            log.info("receive message is :"+ decodedBuff.toString());
 
-                            payLoadBuffer = metaBuffer;
+                            // parse package
+                            PayloadMeta message = null;
+                            try {
+                                message = parsePackage(payLoadBuffer);
+
+                                if (null != message) {
+                                    final int msgType = message.getType();
+                                    if (MessageType.CLUSTERMSG_TYPE_PING.getCode() == msgType) {
+                                        process = new GossipProcessImpl(channel, event);
+                                        eventProcessExecutor.doRun(process);
+                                        // 通过attach的方式来进行写回调
+                                        event.attach(process);
+                                    }
+                                }
+
+                                try {
+                                    ByteBuffer buffer = ByteBuffer.wrap("hello baby".getBytes());
+                                    int c = channel.write(buffer);
+                                    if (c < 0) {
+                                        log.error("write error, the result:" + c);
+                                    }
+                                } catch (IOException e) {
+                                    log.error("write error", e);
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            } finally {
+                                payLoadBuffer = metaBuffer;
+                                metaBuffer.flip();
+                            }
                         }
                     }
 
                     eventProcessExecutor.doRun(process);
-                } else if (event.isWritable()) {
+                }
+
+                if (event.isWritable()) {
+                    AbstractProcess writeCallback = (AbstractProcess) event.attachment();
+                    ByteBuffer outGoingBuffer = writeCallback.getToSentBuffer();
+
+                    try {
+                        int c = channel.write(outGoingBuffer);
+                    } catch (IOException e) {
+                        log.error("write error", e);
+                    }
 
                 }
             }

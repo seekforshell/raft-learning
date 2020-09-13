@@ -4,7 +4,11 @@ package i.dream.raft.cluster.message;
  * @author: yujingzhi
  * Version: 1.0
  */
-public enum ClusterMessageType {
+public enum MessageType {
+
+    CMD_TYPE_INFO(100, "info"),
+    CMD_TYPE_SET(101, "set"),
+    CMD_TYPE_GET(102, "get"),
 
     /**
      * 这里参考redis的消息类型
@@ -25,7 +29,7 @@ public enum ClusterMessageType {
     private int code;
     private String message;
 
-    ClusterMessageType(int code, String message) {
+    MessageType(int code, String message) {
         this.code = code;
         this.message = message;
     }

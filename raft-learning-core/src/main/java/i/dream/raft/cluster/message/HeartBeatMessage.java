@@ -7,7 +7,7 @@ import lombok.Data;
  * Version: 1.0
  */
 @Data
-public class HeartBeatMessage extends MessageHeader {
+public class HeartBeatMessage extends PayloadMeta {
 
     byte[] content;
 }

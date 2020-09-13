@@ -42,8 +42,8 @@ public class Main {
         server.start();
 
         // cluster daemon
-//        ClusterBootStrap clusterBootStrap = new ClusterBootStrap();
-//        clusterBootStrap.start();
+        ClusterBootStrap clusterBootStrap = new ClusterBootStrap();
+        clusterBootStrap.start();
 
     }
 }

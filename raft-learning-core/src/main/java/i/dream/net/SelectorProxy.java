@@ -66,7 +66,6 @@ public class SelectorProxy {
                     if (cnt > 0) {
                         Set<SelectionKey> keys = selector.selectedKeys();
                         for (SelectionKey key : keys) {
-
                             if (key.isAcceptable()) {
                                 ServerSocketChannel channel = (ServerSocketChannel)key.channel();
                                 String clientInfo = "";
@@ -79,12 +78,9 @@ public class SelectorProxy {
                                 acceptChannel.register(selector, SelectionKey.OP_READ);
 
                                 log.info(String.format("client:%s is accepted!", clientInfo));
-                            } else if (key.isReadable()) {
-                                MessageDispatcher.eventQueue.put(key);
-                            } else if (key.isWritable()) {
-                                SocketChannel clientChannel = (SocketChannel)key.channel();
                             }
 
+                            MessageDispatcher.eventQueue.put(key);
                         }
 
                         keys.clear();

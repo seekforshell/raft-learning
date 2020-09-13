@@ -16,7 +16,7 @@ public class CommandProcessImpl implements Process {
         this.client = client;
     }
 
-    @Override public void process() {
+    @Override public void run() {
         String echo = "hello client";
         ByteBuffer buffer = ByteBuffer.wrap(echo.getBytes());
         try {
@@ -24,9 +24,5 @@ public class CommandProcessImpl implements Process {
         } catch (IOException e) {
             log.error("write error:", e);
         }
-    }
-
-    @Override public void run() {
-        process();
     }
 }

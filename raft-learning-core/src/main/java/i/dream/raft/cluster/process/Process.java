@@ -7,5 +7,4 @@ package i.dream.raft.cluster.process;
  * Version: 1.0
  */
 public interface Process extends Runnable {
-    void process();
 }
