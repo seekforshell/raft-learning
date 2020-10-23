@@ -1,0 +1,8 @@
+current_epoch:
+cluster_nodes_num:
+nodes:
+  -
+    node_id:
+    node_slaveof:
+    node_role:
+
