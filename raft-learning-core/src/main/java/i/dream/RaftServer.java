@@ -5,7 +5,7 @@ import i.dream.net.NetProcess;
 import i.dream.raft.struct.cluster.ClusterInfo;
 import i.dream.raft.struct.cluster.ClusterState;
 import i.dream.raft.struct.node.NodeInfo;
-import i.dream.util.FileUtil;
+import i.dream.util.RaftConf;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +43,7 @@ public class RaftServer implements Server {
 
     public void start () {
 
-        SocketAddress socketAddress = new InetSocketAddress(FileUtil.getServerPort());
+        SocketAddress socketAddress = RaftConf.getRaftAddress();
         try {
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);
@@ -51,13 +51,13 @@ public class RaftServer implements Server {
             // register to selector
             serverSocketChannel.register(NetProcess.getSelector(), SelectionKey.OP_ACCEPT);
 
-            Set<InetSocketAddress> nodeSet = FileUtil.getClusterInfo();
-            for (Iterator<InetSocketAddress> it = nodeSet.iterator(); it.hasNext(); ) {
-                InetSocketAddress nodeAddr = it.next();
-                SocketChannel nodeChannel = SocketChannel.open();
-                nodeChannel.connect(nodeAddr);
-                serverSocketChannel.register(NetProcess.getSelector(), SelectionKey.OP_WRITE);
-            }
+//            Set<InetSocketAddress> nodeSet = RaftConf.getClusterInfo();
+//            for (Iterator<InetSocketAddress> it = nodeSet.iterator(); it.hasNext(); ) {
+//                InetSocketAddress nodeAddr = it.next();
+//                SocketChannel nodeChannel = SocketChannel.open();
+//                nodeChannel.connect(nodeAddr);
+//                serverSocketChannel.register(NetProcess.getSelector(), SelectionKey.OP_WRITE);
+//            }
 
         } catch (IOException e) {
             logger.error("open selector error:", e);

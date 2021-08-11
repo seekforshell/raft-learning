@@ -83,9 +83,9 @@ public class ChannelEventHandler implements Runnable {
             SelectionKey event = recvQueue.poll();
             PacketHandler packetHandler = null;
             if (null != event) {
-                SocketChannel channel = (SocketChannel) event.channel();
                 // read channel
                 if (event.isReadable()) {
+                    SocketChannel channel = (SocketChannel) event.channel();
                     // to avoid sticky package, so read the length of package first
                     try {
                         int packetSize = channel.read(payloadBuffer);
@@ -102,7 +102,7 @@ public class ChannelEventHandler implements Runnable {
                     // buffer is full filled ?
                     if (0 == payloadBuffer.remaining()) {
                         // reset position of buffer to read packet
-                        payloadBuffer.flip();
+                        payloadBuffer.rewind();
                         int payloadSize = 0;
                         try {
                             payloadSize = Integer.parseInt(StandardCharsets.UTF_8.decode(payloadBuffer).toString());
@@ -156,6 +156,7 @@ public class ChannelEventHandler implements Runnable {
 
                 // write channel
                 if (event.isWritable()) {
+                    SocketChannel channel = (SocketChannel) event.channel();
                     AbstractPacketHandler writeCallback = (AbstractPacketHandler) event.attachment();
                     ByteBuffer outGoingBuffer = writeCallback.getToSentBuffer();
 

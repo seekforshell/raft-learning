@@ -9,6 +9,7 @@ import lombok.Data;
  */
 @Data
 public abstract class PayloadMeta implements Serializable {
+    private short len;
     private int magic;  /* 负载的魔术字用于检验报文合法性 */
     private short type; /* 命令类型/消息类型 */
     private int flag;   /* 保留字段：进行位操作 */

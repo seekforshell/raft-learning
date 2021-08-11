@@ -2,7 +2,7 @@ package i.dream.net;
 
 import i.dream.RaftServer;
 import i.dream.raft.cluster.ChannelEventHandler;
-import i.dream.util.FileUtil;
+import i.dream.util.RaftConf;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -28,6 +28,7 @@ public class NetProcess {
     private static Selector selector = null;
 
     public void init() throws IOException {
+        selector = Selector.open();
         // 单线程轮询消息事件
         selectorExcutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(1));
         executorHandler = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
@@ -41,7 +42,7 @@ public class NetProcess {
     }
 
     boolean isClusterChannel(ServerSocketChannel channel) {
-        if (FileUtil.getClusterServerPort() == channel.socket().getLocalPort()) {
+        if (RaftConf.getClusterServerPort() == channel.socket().getLocalPort()) {
             return true;
         }
 
@@ -54,8 +55,7 @@ public class NetProcess {
             synchronized (RaftServer.serverStartLock) {
                 try {
                     RaftServer.serverStartLock.wait();
-                    selector = Selector.open();
-                } catch (InterruptedException | IOException e) {
+                } catch (InterruptedException e) {
                     log.error("selector error:system error");
                     System.exit(1);
                 }
@@ -77,9 +77,9 @@ public class NetProcess {
                                 acceptChannel.register(selector, SelectionKey.OP_READ);
 
                                 log.info(String.format("client:%s is accepted!", clientInfo));
+                            } else {
+                                ChannelEventHandler.recvQueue.put(key);
                             }
-
-                            ChannelEventHandler.recvQueue.put(key);
                         }
 
                         keys.clear();

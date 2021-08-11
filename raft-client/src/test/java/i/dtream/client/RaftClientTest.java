@@ -14,9 +14,10 @@ public class RaftClientTest {
 
     @Test
     public void testA() {
-        String[] args = new String[]{"--server", "127.0.0.1:1001", "--set", "test", "hello, world!"};
+        String[] args = new String[]{"--server", "localhost:1901"};
         RaftClient.main(args);
         PayLoad.CommandPayLoad commandPayLoad = new PayLoad.CommandPayLoad();
+        commandPayLoad.setLen((short) 100);
         commandPayLoad.setType((short) CLUSTERMSG_TYPE_TEST.getCode());
         commandPayLoad.setDigest(1000);
         Map<String, Object> content = new HashMap();

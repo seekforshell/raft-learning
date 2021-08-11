@@ -5,14 +5,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.nio.channels.SocketChannel;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.function.Supplier;
 
 /**
  * Description:
@@ -21,22 +18,27 @@ import java.util.function.Supplier;
  * Version: 1.0
  * Create Date Time: 2020-08-31 10:24.
  */
-public class FileUtil {
+public class RaftConf {
 //    private static final String filePath = "/opt/conf/raft.properties";
     private static final String filePath = "M:\\github\\raft-learning\\conf\\raft.properties";
-    private static Properties properties = new Properties();
 
     // cluster_port = [server_port] + 10000
-    private static int SERVER_PORT = 1001;
-    private static int CLUSTER_SERVER_PORT = 10000 + SERVER_PORT;
+    private static final Integer RAFT_SERVER_PORT = 1001;
+    private static final Integer CLUSTER_SERVER_PORT = 10000 + RAFT_SERVER_PORT;
 
-    public static Properties readConfig() throws Exception {
+    private static final String RAFT_PORT = "raft.port";
+
+    private static final String RAFT_ADDRESS = "raft.address";
+
+    private static Properties raftProperties = new Properties();
+
+    public static void readConfig() throws Exception {
         InputStream fileInput = null;
         try {
             String confPath = Optional.ofNullable(System.getProperty("conf")).orElseGet(
-                    () -> FileUtil.class.getProtectionDomain().getClassLoader().getResource("raft.properties").getPath());
+                    () -> RaftConf.class.getProtectionDomain().getClassLoader().getResource("raft.properties").getPath());
             fileInput = new FileInputStream(new File(confPath));
-            properties.load(fileInput);
+            raftProperties.load(fileInput);
         } catch (FileNotFoundException nx) {
             throw new Exception("file not exist, please specify the position of config file!");
         } catch (IOException e) {
@@ -51,38 +53,48 @@ public class FileUtil {
             }
         }
 
-        return properties;
     }
 
     public static String getClusterIp() {
-        if (null != properties) {
-            return ((String) properties.get("bind")).split(":")[0];
+
+        String serverAddress = null;
+
+        if (null != (serverAddress = raftProperties.getProperty(RAFT_ADDRESS))) {
+            return serverAddress.split(":")[0];
         }
 
-        return "localhost";
+        return "localhost" ;
     }
 
     public static Integer getClusterServerPort() {
-        if (null != properties) {
-            String serverPort = (String)properties.get("port");
-            return Integer.parseInt(serverPort) + 10000;
-        }
 
-        return CLUSTER_SERVER_PORT;
+        String serverPort = raftProperties.getProperty(RAFT_PORT);
+        return Integer.parseInt(serverPort) + 10000;
+
     }
 
-    public static Integer getServerPort() {
-        if (null != properties) {
-            String serverPort = (String)properties.get("port");
-            return Integer.parseInt(serverPort);
+    public static Integer getRaftServerPort() {
+        return (Integer) raftProperties.getOrDefault(RAFT_PORT, RAFT_SERVER_PORT);
+
+    }
+
+    public static InetSocketAddress getRaftAddress() {
+        InetSocketAddress inetSocketAddress = null;
+        if (null != raftProperties) {
+            int serverPort = Integer.parseInt((String) raftProperties.get(RAFT_PORT));
+            String serverAddress = raftProperties.getProperty(RAFT_ADDRESS);
+            inetSocketAddress = new InetSocketAddress(serverAddress, serverPort);
         }
 
-        return SERVER_PORT;
+        Optional.of(inetSocketAddress).orElseThrow(
+                () -> new IllegalArgumentException("no raft address info!"));
+
+        return inetSocketAddress;
     }
 
     public static Set<InetSocketAddress> getClusterInfo() throws Exception {
         Set nodeSet = new HashSet();
-        String clusterList = (String) properties.get("cluster");
+        String clusterList = raftProperties.getProperty("cluster");
         for (String node : clusterList.split(",")) {
             String[] nodeIpPort = node.trim().split(":");
             if (2 != nodeIpPort.length) {

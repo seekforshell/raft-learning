@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -20,11 +19,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 public class SocketManager {
     protected SocketChannel s = null;
-    public ByteBuffer recvBuffer;
 
     private static Queue<PayloadMeta> sendQueue = new ArrayBlockingQueue<>(100);
 
-    protected ByteBuffer byteBuffer = ByteBuffer.allocate(2 * 1024 * 1024);
+    protected ByteBuffer recvBuffer = ByteBuffer.allocate(2 * 1024 * 1024);
 
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -66,14 +64,14 @@ public class SocketManager {
                     }
 
                     while (-1 != s.read(recvBuffer)) {
-                        if (byteBuffer.hasRemaining()) {
+                        if (recvBuffer.hasRemaining()) {
                             logger.error("the buffer is overflow!");
                         }
                     }
 
-                    byteBuffer.rewind();
+                    recvBuffer.rewind();
 
-                    CharBuffer content = Charset.defaultCharset().decode(byteBuffer);
+                    CharBuffer content = Charset.defaultCharset().decode(recvBuffer);
                     logger.info("receive package:" + content.toString());
 
                     Thread.sleep(100);

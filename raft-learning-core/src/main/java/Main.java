@@ -1,6 +1,6 @@
 import i.dream.RaftServer;
 import i.dream.net.NetProcess;
-import i.dream.util.FileUtil;
+import i.dream.util.RaftConf;
 
 import java.util.Properties;
 
@@ -21,16 +21,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        Properties config = FileUtil.readConfig();
-        String addressList = config.getProperty("bind");
-        if (null == addressList || addressList.length() < 1) {
-            throw new IllegalArgumentException("please init `bind` parameters");
-        }
-
-        if (addressList.split(":").length != 2) {
-            throw new IllegalArgumentException("invalid init `bind` parameter");
-
-        }
+        RaftConf.readConfig();
 
         // selector init
         NetProcess netProcess = new NetProcess();
