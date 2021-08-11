@@ -1,23 +1,24 @@
-package i.dream.raft.cluster.process;
+package i.dream.raft.cluster.message.handler;
+
+import i.dream.raft.cluster.message.PayloadMeta;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
-public class AbstractProcess implements Process {
+public class AbstractPacketHandler implements PacketHandler {
 
     private SocketChannel channel;
 
-    private SelectionKey key;
+    private PayloadMeta key;
 
     private ByteBuffer toSentBuffer;
 
-    AbstractProcess(SocketChannel channel, SelectionKey key) {
+    AbstractPacketHandler(SocketChannel channel, PayloadMeta key) {
         this.channel = channel;
         this.key = key;
     }
 
-    @Override
     public void run() {
 
     }

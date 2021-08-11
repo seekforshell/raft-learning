@@ -1,4 +1,6 @@
-package i.dream.raft.cluster.process;
+package i.dream.raft.cluster;
+
+import i.dream.raft.cluster.message.handler.PacketHandler;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -12,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author: yujingzhi
  * Version: 1.0
  */
-public class EventProcessExecutor {
+public class ProcessExecutor {
 
     private static ExecutorService executor;
 
@@ -28,11 +30,9 @@ public class EventProcessExecutor {
         });
     }
 
-    public void doRun(Process process) {
-        if (null == process) {
+    public void doRun(PacketHandler packetHandler) {
+        if (null == packetHandler) {
             return;
         }
-
-        executor.submit(process);
     }
 }

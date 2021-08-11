@@ -5,7 +5,14 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.nio.channels.SocketChannel;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Description:
@@ -26,7 +33,8 @@ public class FileUtil {
     public static Properties readConfig() throws Exception {
         InputStream fileInput = null;
         try {
-            String confPath = null == System.getProperty("conf") ? filePath : "";
+            String confPath = Optional.ofNullable(System.getProperty("conf")).orElseGet(
+                    () -> FileUtil.class.getProtectionDomain().getClassLoader().getResource("raft.properties").getPath());
             fileInput = new FileInputStream(new File(confPath));
             properties.load(fileInput);
         } catch (FileNotFoundException nx) {
@@ -70,5 +78,20 @@ public class FileUtil {
         }
 
         return SERVER_PORT;
+    }
+
+    public static Set<InetSocketAddress> getClusterInfo() throws Exception {
+        Set nodeSet = new HashSet();
+        String clusterList = (String) properties.get("cluster");
+        for (String node : clusterList.split(",")) {
+            String[] nodeIpPort = node.trim().split(":");
+            if (2 != nodeIpPort.length) {
+                throw new IllegalArgumentException("illegal host info format");
+           }
+
+            nodeSet.add(new InetSocketAddress(nodeIpPort[0], Integer.parseInt(nodeIpPort[1])));
+        }
+
+        return nodeSet;
     }
 }

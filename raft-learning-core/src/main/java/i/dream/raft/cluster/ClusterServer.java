@@ -1,8 +1,8 @@
 package i.dream.raft.cluster;
 
-import i.dream.IServer;
+import i.dream.Server;
 import i.dream.ex.ClusterException;
-import i.dream.net.SelectorProxy;
+import i.dream.net.NetProcess;
 import i.dream.util.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +19,7 @@ import java.nio.channels.ServerSocketChannel;
  * @author: yujingzhi
  * Version: 1.0
  */
-public class ClusterServer implements IServer {
+public class ClusterServer implements Server {
     private ServerSocketChannel serverSocketChannel = null;
     private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     public void start () {
@@ -30,7 +30,7 @@ public class ClusterServer implements IServer {
             serverSocketChannel.configureBlocking(false);
             serverSocketChannel.socket().bind(socketAddress);
             // register to selector
-            serverSocketChannel.register(SelectorProxy.getSelector(), SelectionKey.OP_ACCEPT);
+            serverSocketChannel.register(NetProcess.getSelector(), SelectionKey.OP_ACCEPT);
 
         } catch (IOException e) {
             logger.error("open selector error:", e);

@@ -1,6 +1,9 @@
 package i.dream.raft.struct.node;
 
+import lombok.Data;
+
 import java.net.InetSocketAddress;
+import java.nio.channels.SocketChannel;
 
 /**
  * Description:
@@ -9,6 +12,7 @@ import java.net.InetSocketAddress;
  * Version: 1.0
  * Create Date Time: 2020-08-24 20:00.
  */
+@Data
 public class NodeInfo {
     public static final short CANDIDATE = 0;
     public static final short FOLLOWER = 1;
@@ -16,7 +20,7 @@ public class NodeInfo {
 
     private String nodeId;
 
-    private InetSocketAddress address;
+    private SocketChannel socketChannel;
 
     private volatile short state;
 }

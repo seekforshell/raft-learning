@@ -14,6 +14,7 @@ public enum MessageType {
      * 这里参考redis的消息类型
      */
 
+    CLUSTERMSG_TYPE_TEST(-1, "test"),
     CLUSTERMSG_TYPE_PING(0, "Ping"),
     CLUSTERMSG_TYPE_PONG(1, "Pong (reply to Ping)"),
     CLUSTERMSG_TYPE_MEET(2, "Meet let's join message"),
@@ -24,7 +25,8 @@ public enum MessageType {
     CLUSTERMSG_TYPE_UPDATE(7 ,"Another node slots configuration"),
     CLUSTERMSG_TYPE_MFSTART(8, "Pause clients for manual failover"),
     CLUSTERMSG_TYPE_MODULE(9, "Module cluster API message."),
-    CLUSTERMSG_TYPE_COUNT(10, "Total number of message types.");
+    CLUSTERMSG_TYPE_COUNT(10, "Total number of message types."),
+    CLUSTERMSG_TYPE_VOTE(11, "request for vote message types.");
 
     private int code;
     private String message;

@@ -1,6 +1,5 @@
-import i.dream.Server;
-import i.dream.net.SelectorProxy;
-import i.dream.raft.cluster.ClusterBootStrap;
+import i.dream.RaftServer;
+import i.dream.net.NetProcess;
 import i.dream.util.FileUtil;
 
 import java.util.Properties;
@@ -34,16 +33,12 @@ public class Main {
         }
 
         // selector init
-        SelectorProxy selectorProxy = new SelectorProxy();
-        selectorProxy.init();
+        NetProcess netProcess = new NetProcess();
+        netProcess.init();
 
         // raft server daemon
-        Server server = new Server();
-        server.start();
-
-        // cluster daemon
-        ClusterBootStrap clusterBootStrap = new ClusterBootStrap();
-        clusterBootStrap.start();
+        RaftServer raftServer = new RaftServer();
+        raftServer.start();
 
     }
 }

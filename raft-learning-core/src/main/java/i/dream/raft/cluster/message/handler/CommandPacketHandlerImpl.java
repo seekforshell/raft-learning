@@ -1,18 +1,17 @@
-package i.dream.raft.cluster.process;
+package i.dream.raft.cluster.message.handler;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channel;
 import java.nio.channels.SocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CommandProcessImpl implements Process {
+public class CommandPacketHandlerImpl implements PacketHandler {
     private Logger log = LoggerFactory.getLogger(this.getClass());
 
     private SocketChannel client;
 
-    public CommandProcessImpl(SocketChannel client) {
+    public CommandPacketHandlerImpl(SocketChannel client) {
         this.client = client;
     }
 
