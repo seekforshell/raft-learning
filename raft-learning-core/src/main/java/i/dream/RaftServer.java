@@ -11,13 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -26,19 +22,21 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Data
 public class RaftServer implements Server {
+    private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+    public final Object serverStartLock = new Object();
 
     private ClusterInfo clusterInfo;
     private ServerSocketChannel serverSocketChannel = null;
-    private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-    public static final Object serverStartLock = new Object();
+    private NetProcess netProcess;
 
-    public RaftServer() {
+    public RaftServer(NetProcess netProcess) {
         // init struct
         clusterInfo = new ClusterInfo();
         clusterInfo.setNodes(new ConcurrentHashMap<String, NodeInfo>(10));
         clusterInfo.setRole(NodeInfo.FOLLOWER);
         final ClusterState state = new ClusterState();
         clusterInfo.setState(state);
+        this.netProcess = netProcess;
     }
 
     public void start () {
@@ -49,7 +47,7 @@ public class RaftServer implements Server {
             serverSocketChannel.configureBlocking(false);
             serverSocketChannel.socket().bind(socketAddress);
             // register to selector
-            serverSocketChannel.register(NetProcess.getSelector(), SelectionKey.OP_ACCEPT);
+            serverSocketChannel.register(netProcess.getSelector(), SelectionKey.OP_ACCEPT);
 
 //            Set<InetSocketAddress> nodeSet = RaftConf.getClusterInfo();
 //            for (Iterator<InetSocketAddress> it = nodeSet.iterator(); it.hasNext(); ) {
@@ -70,7 +68,7 @@ public class RaftServer implements Server {
             throw new ClusterException(e.getMessage());
         }
 
-        synchronized (RaftServer.serverStartLock) {
+        synchronized (serverStartLock) {
             serverStartLock.notifyAll();
         }
 

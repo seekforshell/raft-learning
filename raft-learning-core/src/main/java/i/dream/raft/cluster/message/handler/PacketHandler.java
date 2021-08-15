@@ -6,6 +6,6 @@ package i.dream.raft.cluster.message.handler;
  * @author: yujingzhi
  * Version: 1.0
  */
-public interface PacketHandler {
+public interface PacketHandler extends Runnable {
 	void run();
 }

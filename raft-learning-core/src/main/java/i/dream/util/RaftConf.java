@@ -1,5 +1,8 @@
 package i.dream.util;
 
+import i.dream.ex.ConfigException;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -18,6 +21,7 @@ import java.util.Set;
  * Version: 1.0
  * Create Date Time: 2020-08-31 10:24.
  */
+@Slf4j
 public class RaftConf {
 //    private static final String filePath = "/opt/conf/raft.properties";
     private static final String filePath = "M:\\github\\raft-learning\\conf\\raft.properties";
@@ -42,7 +46,8 @@ public class RaftConf {
         } catch (FileNotFoundException nx) {
             throw new Exception("file not exist, please specify the position of config file!");
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("load conf error", e);
+            throw new ConfigException("read conf exception:%s", e.getMessage());
         } finally {
             if (null != fileInput) {
                 try {
@@ -86,7 +91,7 @@ public class RaftConf {
             inetSocketAddress = new InetSocketAddress(serverAddress, serverPort);
         }
 
-        Optional.of(inetSocketAddress).orElseThrow(
+        Optional.ofNullable(inetSocketAddress).orElseThrow(
                 () -> new IllegalArgumentException("no raft address info!"));
 
         return inetSocketAddress;

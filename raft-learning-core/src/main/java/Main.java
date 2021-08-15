@@ -21,6 +21,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
+        // load configure
         RaftConf.readConfig();
 
         // selector init
@@ -28,7 +29,7 @@ public class Main {
         netProcess.init();
 
         // raft server daemon
-        RaftServer raftServer = new RaftServer();
+        RaftServer raftServer = new RaftServer(netProcess);
         raftServer.start();
 
     }

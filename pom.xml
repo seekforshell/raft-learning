@@ -14,6 +14,7 @@
         <assembly.name>raft-lab</assembly.name>
         <raft.version>1.0</raft.version>
         <slf4j-api.version>1.7.21</slf4j-api.version>
+        <lombok.version>1.18.12</lombok.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
     </properties>
 

@@ -1,28 +1,23 @@
 package i.dream.raft.cluster;
 
 import i.dream.ex.PackageParseException;
-import i.dream.raft.cluster.message.MessageType;
 import i.dream.raft.cluster.message.PayLoad;
 import i.dream.raft.cluster.message.PayloadMeta;
 import i.dream.raft.cluster.message.handler.AbstractPacketHandler;
-import i.dream.raft.cluster.message.handler.DemoPacketHandler;
-import i.dream.raft.cluster.message.handler.GossipPacketHandlerImpl;
-import i.dream.raft.cluster.message.handler.PacketHandler;
+import i.dream.raft.cluster.message.handler.HelloPacketHandler;
+import i.dream.raft.cluster.message.handler.PacketCallback;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import static i.dream.raft.cluster.message.MessageType.CLUSTERMSG_TYPE_TEST;
 
 /**
  * 对报文进行读写
@@ -36,7 +31,7 @@ public class ChannelEventHandler implements Runnable {
     /**
      * 负载元数据信息为8字节，包括4字节的魔术字和4字节的报文长度
      */
-    private final short HEAD_LENGTH = 2;
+    private final short HEAD_LENGTH = 4;
 
     private ByteBuffer metaBuffer = ByteBuffer.allocate(HEAD_LENGTH);
 
@@ -48,31 +43,35 @@ public class ChannelEventHandler implements Runnable {
 
     public static ProcessExecutor eventProcessExecutor = new ProcessExecutor();
 
-    public PayloadMeta parsePackage(ByteBuffer rawPackage) {
-        if (PayLoad.MAGIC != rawPackage.getInt()) {
+    private static Map<Integer, PacketCallback> packetCBMap = new HashMap<>(16);
+
+    static {
+        packetCBMap.put(CLUSTERMSG_TYPE_TEST.getCode(), (rawPackage, channel) -> {
+            PayLoad.HelloPayLoad helloPayLoad = new PayLoad.HelloPayLoad();
+            helloPayLoad.read(rawPackage);
+            eventProcessExecutor.doRun(new HelloPacketHandler(channel, helloPayLoad));
+        });
+    }
+
+    public PayloadMeta processPackage(ByteBuffer rawPackage, SocketChannel channel) {
+
+        PayloadMeta packetHeader = PayloadMeta.parse(rawPackage);
+        if (PayLoad.MAGIC != packetHeader.getMagic()) {
             log.error("invalid package format, magic:" + rawPackage.getInt());
             throw new PackageParseException("magic is invalid");
         }
 
-        Short packageType = rawPackage.getShort();
-
-        rawPackage.rewind();
-
         PayloadMeta payloadMeta = null;
 
-        ObjectInputStream payloadStream;
         try {
-            payloadStream = new ObjectInputStream(new ByteArrayInputStream(rawPackage.array()));
-            if (packageType.equals(1)) {
-                payloadMeta = (PayLoad.RequestVotePayLoad)payloadStream.readObject();
-            }
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            packetCBMap.get(packetHeader.getType()).handle(rawPackage, channel);
+        } catch (Exception e) {
+            log.error("process package error", e);
         }
 
-        log.info("type: {} ", rawPackage.getShort());
-        log.info("flag: {} ", rawPackage.getInt());
-        log.info("digest: {} ", rawPackage.getLong());
+        log.info("type: {} ", packetHeader.getType());
+        log.info("flag: {} ", packetHeader.getFlag());
+        log.info("digest: {} ", packetHeader.getDigest());
 
         return payloadMeta;
     }
@@ -80,19 +79,24 @@ public class ChannelEventHandler implements Runnable {
     @Override
     public void run() {
         while (true) {
-            SelectionKey event = recvQueue.poll();
-            PacketHandler packetHandler = null;
+            SelectionKey event = null;
+            try {
+                event = recvQueue.take();
+            } catch (InterruptedException e) {
+                log.error("recv error", e);
+            }
+
             if (null != event) {
                 // read channel
                 if (event.isReadable()) {
-                    SocketChannel channel = (SocketChannel) event.channel();
+                    SocketChannel peer = (SocketChannel) event.channel();
                     // to avoid sticky package, so read the length of package first
                     try {
-                        int packetSize = channel.read(payloadBuffer);
+                        int packetSize = peer.read(payloadBuffer);
                         if (packetSize < 0) {
-                            log.error("read payload length, unable to read additional data");
-                            channel.socket().close();
-                            channel.close();
+                            log.error("read payload length, unable to read additional data, client:{}", peer.getRemoteAddress());
+                            peer.socket().close();
+                            peer.close();
                             continue;
                         }
                     } catch (IOException e) {
@@ -105,16 +109,17 @@ public class ChannelEventHandler implements Runnable {
                         payloadBuffer.rewind();
                         int payloadSize = 0;
                         try {
-                            payloadSize = Integer.parseInt(StandardCharsets.UTF_8.decode(payloadBuffer).toString());
+                            payloadSize = payloadBuffer.getInt();
                             // TODO: 2021/8/10 size check
                         } catch (NumberFormatException e) {
                             log.error("invalid package format", e);
                         }
 
                         payloadBuffer = ByteBuffer.allocate(payloadSize);
+                        payloadBuffer.putInt(payloadSize);
 
                         try {
-                            int c = channel.read(payloadBuffer);
+                            int c = peer.read(payloadBuffer);
                             if (c < 0) {
                                 log.error("read payload, unable to read additional data");
                             }
@@ -125,22 +130,9 @@ public class ChannelEventHandler implements Runnable {
                         // read finished ?
                         if (0 == payloadBuffer.remaining()) {
                             payloadBuffer.rewind();
-
-                            CharBuffer decodedBuff = StandardCharsets.UTF_8.decode(payloadBuffer);
-                            log.info("receive message is :"+ decodedBuff.toString());
-
                             // parse package
-                            PayloadMeta payloadBody = null;
                             try {
-                                payloadBody = parsePackage(payloadBuffer);
-
-                                if (null != payloadBody) {
-                                    final int msgType = payloadBody.getType();
-                                    if (MessageType.CLUSTERMSG_TYPE_TEST.getCode() == msgType) {
-                                        packetHandler = new DemoPacketHandler(channel, payloadBody);
-                                        packetHandler.run();
-                                    }
-                                }
+                                processPackage(payloadBuffer, peer);
                             } catch (Exception e) {
                                 log.error("parse package error", e);
                             } finally {
@@ -150,8 +142,6 @@ public class ChannelEventHandler implements Runnable {
                             }
                         }
                     }
-
-                    eventProcessExecutor.doRun(packetHandler);
                 }
 
                 // write channel
@@ -165,7 +155,6 @@ public class ChannelEventHandler implements Runnable {
                     } catch (IOException e) {
                         log.error("write error", e);
                     }
-
                 }
             }
         }

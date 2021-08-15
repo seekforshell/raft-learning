@@ -31,8 +31,8 @@ public class ProcessExecutor {
     }
 
     public void doRun(PacketHandler packetHandler) {
-        if (null == packetHandler) {
-            return;
+        if (null != packetHandler) {
+            executor.submit(packetHandler);
         }
     }
 }

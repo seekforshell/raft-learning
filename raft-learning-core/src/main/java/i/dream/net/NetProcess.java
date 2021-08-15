@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class NetProcess {
     private static Executor selectorExcutor = null;
     private static Executor executorHandler = null;
-    private static Selector selector = null;
+    private Selector selector = null;
 
     public void init() throws IOException {
         selector = Selector.open();
@@ -36,7 +36,7 @@ public class NetProcess {
         executorHandler.execute(new ChannelEventHandler());
     }
 
-    public static Selector getSelector() {
+    public Selector getSelector() {
         assert null != selector;
         return selector;
     }
@@ -51,16 +51,6 @@ public class NetProcess {
 
     class SelectorProxyTask implements Runnable {
         public void run() {
-
-            synchronized (RaftServer.serverStartLock) {
-                try {
-                    RaftServer.serverStartLock.wait();
-                } catch (InterruptedException e) {
-                    log.error("selector error:system error");
-                    System.exit(1);
-                }
-            }
-
             try {
                 while (selector.isOpen()) {
                     int cnt = selector.select(100L);
@@ -80,6 +70,7 @@ public class NetProcess {
                             } else {
                                 ChannelEventHandler.recvQueue.put(key);
                             }
+
                         }
 
                         keys.clear();

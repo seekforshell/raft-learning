@@ -1,12 +1,14 @@
 package i.dtream.client;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import i.dream.raft.cluster.message.PayloadMeta;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
 public class RaftClient {
     public static Map<String, String> commandMap = new HashMap<>();
     private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -47,9 +49,6 @@ public class RaftClient {
         socketManager = new SocketManager();
         socketManager.init(serverIp, Integer.parseInt(serverPort));
 
-        System.out.println("welcome to use raft client!");
-//        CommandDispatcher executor = new CommandDispatcher();
-//        executor.exec();
-
+        log.info("welcome to use raft client!");
     }
 }

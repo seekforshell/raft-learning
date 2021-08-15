@@ -6,29 +6,28 @@ import i.dream.raft.cluster.message.PayloadMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
-import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 public class SocketManager {
     protected SocketChannel s = null;
 
-    private static Queue<PayloadMeta> sendQueue = new ArrayBlockingQueue<>(100);
+    private static BlockingQueue<PayloadMeta> sendQueue = new ArrayBlockingQueue<>(100);
 
     protected ByteBuffer recvBuffer = ByteBuffer.allocate(2 * 1024 * 1024);
 
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    public static final Object lock = new Object();
+
     public void init(String serverIp , int serverPort) {
         try {
             s = SocketChannel.open();
+            s.configureBlocking(true);
             s.connect(new InetSocketAddress(serverIp, serverPort));
         } catch (IOException e) {
             logger.error("connect error", e);
@@ -49,46 +48,55 @@ public class SocketManager {
     }
 
     class RequestTask implements Runnable {
-
         @Override
         public void run() {
-            for (;s.isConnected();) {
-                try {
+			try {
+				for (; s.isConnected(); ) {
+					try {
+						logger.info("client channel:{}", s.getLocalAddress());
+						// write
+						PayLoad.HelloPayLoad sendPayload = (PayLoad.HelloPayLoad) sendQueue.take();
+						try {
+							ByteBuffer packetBuffer = sendPayload.write(null);
+							int wl = s.write(packetBuffer);
 
-                    // write
-                    PayLoad.CommandPayLoad sendPayload = (PayLoad.CommandPayLoad) sendQueue.poll();
-                    try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-                        ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
-                        objectOutputStream.writeObject(sendPayload);
-                        s.write(ByteBuffer.wrap(byteArrayOutputStream.toByteArray()));
-                    }
+							logger.info("write {} byte", wl);
+						} catch (Exception e) {
+							logger.error("write error", e);
+						}
 
-                    while (-1 != s.read(recvBuffer)) {
-                        if (recvBuffer.hasRemaining()) {
-                            logger.error("the buffer is overflow!");
-                        }
-                    }
+						while (-1 != s.read(recvBuffer)) {
+							if (recvBuffer.hasRemaining()) {
+								logger.error("the buffer is overflow!");
+							}
+						}
 
-                    recvBuffer.rewind();
+						recvBuffer.rewind();
 
-                    CharBuffer content = Charset.defaultCharset().decode(recvBuffer);
-                    logger.info("receive package:" + content.toString());
+						logger.info("receive package:" + recvBuffer.toString());
 
-                    Thread.sleep(100);
-                } catch (IOException io){
-                    logger.error("io error", io);
-                } catch (InterruptedException e) {
-                    logger.error("interrupt error", e);
-                    Thread.currentThread().interrupt();
-                } finally {
-                    try {
-                        s.close();
-                    } catch (IOException e) {
-                        logger.error("close error", e);
-                    }
-                }
+						Thread.sleep(100);
+					} catch (IOException io) {
+						logger.error("io error", io);
+					} catch (InterruptedException e) {
+						logger.error("interrupt error", e);
+						Thread.currentThread().interrupt();
+					} finally {
+						try {
+							s.close();
+						} catch (IOException e) {
+							logger.error("close error", e);
+						}
+					}
 
-            }
-        }
+				}
+			} catch (Exception e) {
+				logger.error("request task error", e);
+			} finally {
+				synchronized (lock) {
+					lock.notifyAll();
+				}
+			}
+		}
     }
 }
