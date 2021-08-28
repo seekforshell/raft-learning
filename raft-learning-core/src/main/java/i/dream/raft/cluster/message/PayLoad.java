@@ -114,10 +114,33 @@ public class PayLoad {
         /**
          * candidate requesting vote
          */
-        private byte[] candidateId;
+        private byte[] candidateId = new byte[4];
 
+        // index of candidate’s last log entry
         private long lastLogIndex;
 
+        // term of candidate’s last log entry
         private long lastLogTerm;
+
+        @Override
+        public ByteBuffer write(ByteBuffer buffer) {
+            super.write(buffer);
+            buffer.putLong(candidateTerm);
+            buffer.put(candidateId);
+            buffer.putLong(lastLogIndex);
+            buffer.putLong(lastLogTerm);
+            return buffer;
+        }
+
+        @Override
+        public Object read(ByteBuffer buffer) {
+            super.read(buffer);
+
+            candidateTerm = buffer.getLong();
+            buffer.get(candidateId);
+            lastLogIndex = buffer.getLong();
+            lastLogTerm = buffer.getLong();
+            return this;
+        }
     }
 }

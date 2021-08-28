@@ -22,6 +22,13 @@ import java.nio.channels.ServerSocketChannel;
 public class ClusterServer implements Server {
     private ServerSocketChannel serverSocketChannel = null;
     private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+
+    private NetProcess netProcess;
+
+    ClusterServer(NetProcess netProcess) {
+        this.netProcess = netProcess;
+    }
+
     public void start () {
 
         SocketAddress socketAddress = new InetSocketAddress(RaftConf.getClusterServerPort());
@@ -30,7 +37,7 @@ public class ClusterServer implements Server {
             serverSocketChannel.configureBlocking(false);
             serverSocketChannel.socket().bind(socketAddress);
             // register to selector
-            serverSocketChannel.register(NetProcess.getSelector(), SelectionKey.OP_ACCEPT);
+            serverSocketChannel.register(netProcess.getSelector(), SelectionKey.OP_ACCEPT);
 
         } catch (IOException e) {
             logger.error("open selector error:", e);

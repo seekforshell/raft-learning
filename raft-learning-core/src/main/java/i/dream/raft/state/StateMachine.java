@@ -14,6 +14,7 @@ public class StateMachine {
 
 	private ClusterInfo clusterInfo;
 
+
 	public class ElectionTimeoutPacketHandler implements PacketHandler {
 		private long timeout;
 

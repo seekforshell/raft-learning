@@ -42,13 +42,12 @@ public class PayloadMeta extends Types implements Serializable {
 
     @Override
     public Object read(ByteBuffer buffer) {
-        PayloadMeta payloadMeta = this;
-        payloadMeta.setLen(buffer.getInt());
-        payloadMeta.setMagic(buffer.getInt());
-        payloadMeta.setType(buffer.getShort());
-        payloadMeta.setFlag(buffer.getInt());
-        payloadMeta.setDigest(buffer.getLong());
-        return payloadMeta;
+        setLen(buffer.getInt());
+        setMagic(buffer.getInt());
+        setType(buffer.getShort());
+        setFlag(buffer.getInt());
+        setDigest(buffer.getLong());
+        return this;
     }
 
 
