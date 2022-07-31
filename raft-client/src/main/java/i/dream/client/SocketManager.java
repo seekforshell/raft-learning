@@ -1,4 +1,4 @@
-package i.dtream.client;
+package i.dream.client;
 
 import i.dream.ex.ConnectError;
 import i.dream.raft.cluster.message.PayLoad;

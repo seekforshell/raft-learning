@@ -2,38 +2,59 @@ package i.dream.raft.state;
 
 import i.dream.raft.cluster.message.handler.PacketHandler;
 import i.dream.raft.struct.cluster.ClusterInfo;
-import i.dream.raft.struct.node.NodeInfo;
-
-import java.util.Map;
+import i.dream.util.RaftConf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author: yujingzhi
  * Version: 1.0
  */
-public class StateMachine {
+public class StateMachine extends Thread {
 
+	private Logger logger = LoggerFactory.getLogger(StateMachine.class);
 	private ClusterInfo clusterInfo;
 
+	private RaftConf raftConf;
 
-	public class ElectionTimeoutPacketHandler implements PacketHandler {
-		private long timeout;
+	/**
+	 * 心跳超时时间
+	 */
+	private final int HEAT_BEAT_TO = 10;
 
-		ElectionTimeoutPacketHandler(long timeout) {
-			this.timeout = timeout;
+	public StateMachine(ClusterInfo clusterInfo) {
+		this.clusterInfo = clusterInfo;
+	}
+
+	private boolean isTimeout(long last) {
+		if (-1 == last || (System.currentTimeMillis() - last) - 1000* HEAT_BEAT_TO > 0) {
+			return true;
 		}
 
-		@Override
-		public void run() {
-			if (StateEnum.CANDIDATE.id == clusterInfo.getRole()) {
-				// send vote && wait
-				for (Map.Entry<String, NodeInfo> entry : clusterInfo.getNodes().entrySet()) {
-					NodeInfo node = entry.getValue();
-					if (node.getSocketChannel().isConnected()) {
+		return false;
+	}
 
-					}
+	@Override
+	public void run() {
+
+		StateHandlerBuilder.StateHandler stateHandler = StateHandlerBuilder.builder();
+		for ( ; ;) {
+			if (StateEnum.FOLLOWER == clusterInfo.getRole()) {
+
+				if (!clusterInfo.leaderReady() || isTimeout(clusterInfo.getLastHeartBeatFromLeader())) {
+					logger.info("heart beat timeout with leader");
+
+					clusterInfo.setRole(StateEnum.CANDIDATE);
+					StateHandlerBuilder.StateEvent stateEvent = new StateHandlerBuilder.StateEvent(StateEnum.FOLLOWER, StateEnum.CANDIDATE);
+					stateHandler.match(stateEvent).callback();
+
 				}
-			} else if (StateEnum.FOLLOWER.id == clusterInfo.getRole()) {
+			}
 
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				logger.warn("interrupt state machine, ignored");
 			}
 
 		}

@@ -2,6 +2,7 @@ package i.dream;
 
 import i.dream.ex.ClusterException;
 import i.dream.net.NetProcess;
+import i.dream.raft.state.StateMachine;
 import i.dream.raft.struct.cluster.ClusterInfo;
 import i.dream.raft.struct.cluster.ClusterState;
 import i.dream.raft.struct.node.NodeInfo;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
@@ -30,13 +32,24 @@ public class RaftServer implements Server {
     private NetProcess netProcess;
 
     public RaftServer(NetProcess netProcess) {
+        this.netProcess = netProcess;
+    }
+
+    public void init() throws Exception {
         // init struct
         clusterInfo = new ClusterInfo();
-        clusterInfo.setNodes(new ConcurrentHashMap<String, NodeInfo>(10));
-        clusterInfo.setRole(NodeInfo.FOLLOWER);
+        clusterInfo.setConnectedNodes(new ConcurrentHashMap<InetSocketAddress, NodeInfo>(10));
+        clusterInfo.setRole(StateMachine.StateEnum.FOLLOWER);
+        clusterInfo.setLastHeartBeatFromLeader(-1);
         final ClusterState state = new ClusterState();
         clusterInfo.setState(state);
-        this.netProcess = netProcess;
+
+        clusterInfo.setNodes(RaftConf.getClusterInfo());
+    }
+
+
+    public ClusterInfo getClusterInfo() {
+        return clusterInfo;
     }
 
     public void start () {
@@ -49,13 +62,6 @@ public class RaftServer implements Server {
             // register to selector
             serverSocketChannel.register(netProcess.getSelector(), SelectionKey.OP_ACCEPT);
 
-//            Set<InetSocketAddress> nodeSet = RaftConf.getClusterInfo();
-//            for (Iterator<InetSocketAddress> it = nodeSet.iterator(); it.hasNext(); ) {
-//                InetSocketAddress nodeAddr = it.next();
-//                SocketChannel nodeChannel = SocketChannel.open();
-//                nodeChannel.connect(nodeAddr);
-//                serverSocketChannel.register(NetProcess.getSelector(), SelectionKey.OP_WRITE);
-//            }
 
         } catch (IOException e) {
             logger.error("open selector error:", e);

@@ -1,5 +1,7 @@
 import i.dream.RaftServer;
 import i.dream.net.NetProcess;
+import i.dream.raft.cluster.heartbeat.NodeHeartBeat;
+import i.dream.raft.state.StateMachine;
 import i.dream.util.RaftConf;
 
 import java.util.Properties;
@@ -30,7 +32,14 @@ public class Main {
 
         // raft server daemon
         RaftServer raftServer = new RaftServer(netProcess);
+        raftServer.init();
         raftServer.start();
+
+        NodeHeartBeat heartBeat = new NodeHeartBeat(raftServer);
+        heartBeat.start();
+
+        StateMachine stateMachine = new StateMachine(raftServer.getClusterInfo());
+        stateMachine.start();
 
     }
 }

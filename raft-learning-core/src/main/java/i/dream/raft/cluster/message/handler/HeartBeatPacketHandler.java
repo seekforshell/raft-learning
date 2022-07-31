@@ -18,12 +18,5 @@ public class HeartBeatPacketHandler implements PacketHandler {
 	@Override
 	public void run() {
 
-		switch (raftServer.getClusterInfo().getRole()) {
-			case NodeInfo
-					.FOLLOWER:
-
-
-		}
-
 	}
 }

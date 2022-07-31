@@ -31,6 +31,6 @@ public class GetCmd extends Cmd {
 		dataOutput.write(new byte[] {RaftCmds.OP_SET.getOpCode()});
 		dataOutput.writeInt(key);
 		dataOutput.writeChars(LOG_SPLITOR);
-		return ByteBuffer.wrap(out.toByteArray());
+		return out.toByteArray();
 	}
 }

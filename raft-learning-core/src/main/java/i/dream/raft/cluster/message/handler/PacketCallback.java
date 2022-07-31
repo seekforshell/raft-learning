@@ -1,5 +1,7 @@
 package i.dream.raft.cluster.message.handler;
 
+import i.dream.raft.cluster.message.PayloadMeta;
+
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
@@ -9,5 +11,5 @@ import java.nio.channels.SocketChannel;
  */
 @FunctionalInterface
 public interface PacketCallback {
-	void handle(ByteBuffer rawPackage, SocketChannel channel);
+	void handle(PayloadMeta payload, SocketChannel channel);
 }

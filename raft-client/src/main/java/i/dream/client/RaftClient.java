@@ -1,4 +1,4 @@
-package i.dtream.client;
+package i.dream.client;
 
 import i.dream.raft.cluster.message.PayloadMeta;
 import lombok.extern.slf4j.Slf4j;

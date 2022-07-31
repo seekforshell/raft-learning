@@ -97,7 +97,7 @@ public class RaftConf {
         return inetSocketAddress;
     }
 
-    public Set<InetSocketAddress> getClusterInfo() throws Exception {
+    public static Set<InetSocketAddress> getClusterInfo() throws Exception {
         Set nodeSet = new HashSet();
         String clusterList = raftProperties.getProperty("cluster");
         for (String node : clusterList.split(",")) {

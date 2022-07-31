@@ -35,6 +35,6 @@ public class SetCmd extends Cmd {
 		dataOutput.writeInt(key);
 		dataOutput.writeInt(value);
 		dataOutput.writeChars(LOG_SPLITOR);
-		return ByteBuffer.wrap(out.toByteArray());
+		return out.toByteArray();
 	}
 }

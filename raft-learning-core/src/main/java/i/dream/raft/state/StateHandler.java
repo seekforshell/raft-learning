@@ -2,10 +2,13 @@ package i.dream.raft.state;
 
 import i.dream.raft.state.StateMachine.StateEnum;
 import i.dream.util.RaftConf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static i.dream.raft.state.StateMachine.StateEnum.CANDIDATE;
 import static i.dream.raft.state.StateMachine.StateEnum.FOLLOWER;
@@ -15,15 +18,36 @@ import static i.dream.raft.state.StateMachine.StateEnum.LEADER;
  * @author: yujingzhi
  * Version: 1.0
  */
-public class StateHandler {
+class StateHandlerBuilder {
+
+	private static Logger log = LoggerFactory.getLogger(StateHandlerBuilder.class);
+
+	private static volatile StateHandler handler = null;
 
 	private static List<StateTriple> stateTriples = new ArrayList<>();
-	private RaftConf raftConf;
+	private BlockingQueue<StateEvent> eventQueue = new LinkedBlockingQueue<>();
 
-	static {
-		stateTriples.add(new StateTriple(FOLLOWER, CANDIDATE, LeaderElect::elect));
-		stateTriples.add(new StateTriple(CANDIDATE, CANDIDATE, LeaderElect::elect));
-		stateTriples.add(new StateTriple(CANDIDATE, LEADER, LeaderElect::elect));
+
+	public static StateHandler builder() {
+		return getInstance();
+	}
+
+	public static class StateEvent {
+		StateEnum before;
+		StateEnum after;
+		public StateEvent(StateEnum before, StateEnum after) {
+			this.before = before;
+			this.after = after;
+		}
+	}
+
+	public static StateHandler getInstance() {
+		if (null == handler) {
+			handler = new StateHandler();
+			handler.init();
+		}
+
+		return handler;
 	}
 
 	public static class StateTriple {
@@ -36,4 +60,25 @@ public class StateHandler {
 			this.cb = cb;
 		}
 	}
+
+	public static class StateHandler {
+		public void init() {
+			LeaderElect leaderElect = new LeaderElect();
+			stateTriples.add(new StateTriple(FOLLOWER, CANDIDATE, leaderElect::elect));
+		}
+
+		StateTransformCB match(StateEvent event) {
+			StateTransformCB cb = null;
+			for (StateTriple triple : stateTriples) {
+				if (triple.after == event.after && triple.before == event.before) {
+					cb = triple.cb;
+					break;
+				}
+			}
+
+			return cb;
+		}
+
+	}
+
 }

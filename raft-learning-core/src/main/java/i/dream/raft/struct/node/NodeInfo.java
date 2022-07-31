@@ -14,13 +14,10 @@ import java.nio.channels.SocketChannel;
  */
 @Data
 public class NodeInfo {
-    public static final short CANDIDATE = 0;
-    public static final short FOLLOWER = 1;
-    public static final short LEADER = 2;
 
     private String nodeId;
 
     private SocketChannel socketChannel;
 
-    private volatile short state;
+    private volatile short channelStatus;
 }

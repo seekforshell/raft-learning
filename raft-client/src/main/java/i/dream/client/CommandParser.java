@@ -1,14 +1,10 @@
-package i.dtream.client;
+package i.dream.client;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static i.dtream.client.RaftClient.commandMap;
-import static i.dtream.client.RaftClient.usage;
 
 public class CommandParser {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -22,7 +18,7 @@ public class CommandParser {
     public Map<String, Object> parseOptions(String args[]) {
         if (null == args || args.length == 0) {
             logger.warn("parse option, args is empty.");
-            usage();
+            RaftClient.usage();
             System.exit(1);
         }
 
@@ -37,7 +33,7 @@ public class CommandParser {
                             String key = args[i + 1];
                             String keyValue = args[i + 2];
                             if (!keyPattern.matcher(key).matches() || !valuePattern.matcher(keyValue).matches()) {
-                                System.out.println("非法的参数：" + commandMap.get("set"));
+                                System.out.println("非法的参数：" + RaftClient.commandMap.get("set"));
                                 System.exit(1);
                             }
                             Map<String, String> kv = new HashMap<>();
@@ -47,7 +43,7 @@ public class CommandParser {
                         } else if (command.equals("server")) {
                             String serverInfo = args[i + 1];
                             if (!serverAddrPattern.matcher(serverInfo).matches()) {
-                                System.out.println("非法的参数：" + commandMap.get("server"));
+                                System.out.println("非法的参数：" + RaftClient.commandMap.get("server"));
                                 System.exit(1);
                             }
 
@@ -62,7 +58,7 @@ public class CommandParser {
                 }
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
-                usage();
+                RaftClient.usage();
                 System.exit(1);
             }
         }

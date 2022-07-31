@@ -1,13 +1,10 @@
-package i.dtream.client;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+package i.dream.client;
 
 import i.dream.raft.cluster.message.PayLoad;
-import i.dream.raft.cluster.message.PayloadMeta;
 import org.junit.Test;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static i.dream.raft.cluster.message.MessageType.CLUSTERMSG_TYPE_TEST;
 
